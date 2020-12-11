@@ -25,8 +25,7 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-
-from models import Venue, Artist, Show
+from models import *
 
 #----------------------------------------------------------------------------#
 # Filters.
