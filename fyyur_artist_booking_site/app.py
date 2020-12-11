@@ -10,6 +10,7 @@ import sys
 from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from flask_migrate import Migrate
 
 import logging
@@ -57,29 +58,27 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  # TODO: num_shows should be aggregated based on number of upcoming shows per venue.
+  possible_areas = Venue.query.with_entities(func.count(Venue.id), Venue.city, Venue.state).group_by(Venue.city, Venue.state).all()
+  
+  data = []
+  for possible_area in possible_areas:
+    area_venues = Venue.query.filter_by(state=possible_area.state).filter_by(city=possible_area.city).all()
+
+    venue_data = []
+    for venue in area_venues:
+      print(venue.name)
+      venue_data.append({
+        "id": venue.id,
+        "name": venue.name,
+        "num_upcoming_shows": 0
+      })
+
+    data.append({
+      "city": possible_area.city,
+      "state": possible_area.state,
+      "venues": venue_data
+    })
   return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
@@ -191,8 +190,6 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
   error = False
   name = request.form['name']
   city = request.form['city']
