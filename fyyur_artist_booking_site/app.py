@@ -209,7 +209,8 @@ def create_venue_submission():
 
     db.session.add(venue)
     db.session.commit()
-  except:
+  except Exception as e:
+    print(e)
     db.session.rollback()
     print(sys.exc_info())
   finally:
